@@ -17,7 +17,7 @@ warnings.filterwarnings('ignore', category=UserWarning)
 DB_CONFIG = {
     "host": "localhost",
     "user": "root",
-    "password": "NDa27072004",  # Mật khẩu của bạn
+    "password": os.getenv("DB_PASSWORD", ""),
     "database": "animal_sounds"
 }
 
@@ -181,7 +181,7 @@ def visualize_comparison(q_vec, top5_vecs, top5_labels):
 
 if __name__ == "__main__":
     # Test trực tiếp với file âm thanh thô của bạn (Ví dụ: tiếng mèo)
-    raw_file = r"D:\archive\Animal-Soundprepros\Aslan\Lion_1.wav"
+    raw_file = r"D:\archive\Animal-Soundprepros\Bear\Bear_1.wav"
     if os.path.exists(raw_file):
         integrated_retrieval(raw_file)
     else:

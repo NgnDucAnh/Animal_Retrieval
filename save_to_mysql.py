@@ -1,6 +1,9 @@
 import os
 import mysql.connector
 from extract_audio_features import extract_audio_features
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def process_all_and_save_to_mysql(base_dir):
     # ==========================================
@@ -10,7 +13,7 @@ def process_all_and_save_to_mysql(base_dir):
         db = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="NDa27072004",  # Đã cấu hình theo mật khẩu của bạn
+            password=os.getenv("DB_PASSWORD", ""),
             database="animal_sounds"
         )
         cursor = db.cursor()
