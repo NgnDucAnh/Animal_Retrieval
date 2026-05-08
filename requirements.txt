@@ -6,3 +6,5 @@ mysql-connector-python
 pandas
 matplotlib
 scikit-learn
+flask
+werkzeug

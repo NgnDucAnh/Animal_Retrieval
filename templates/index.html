@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐾 Animal Sound Retrieval System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050b1a;--surface:#0d1526;--surface2:#131e35;--border:#1e2d4a;
+  --accent:#6366f1;--accent2:#818cf8;--green:#10b981;--red:#f43f5e;
+  --amber:#f59e0b;--cyan:#06b6d4;--text:#e2e8f0;--muted:#64748b;--sub:#94a3b8;
+  color-scheme: dark;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* Custom Audio Player Styling */
+audio { outline: none; border-radius: 8px; }
+audio::-webkit-media-controls-panel { background-color: var(--surface2); }
+audio::-webkit-media-controls-current-time-display, audio::-webkit-media-controls-time-remaining-display { color: var(--text); }
+/* Animated background */
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 0%,#1e1b4b33,transparent),radial-gradient(ellipse 60% 50% at 80% 100%,#0c4a6e22,transparent);pointer-events:none;z-index:0}
+
+header{position:relative;z-index:1;padding:28px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);backdrop-filter:blur(10px)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo h1{font-size:1.4rem;font-weight:700;background:linear-gradient(135deg,#818cf8,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo span{font-size:2rem}
+#stats-badge{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:.8rem;color:var(--sub)}
+#stats-badge b{color:var(--accent2)}
+
+main{position:relative;z-index:1;max-width:1300px;margin:0 auto;padding:32px 24px;display:grid;grid-template-columns:380px 1fr;gap:24px}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px}
+.card-title{font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:16px}
+
+/* UPLOAD AREA */
+#drop-zone{border:2px dashed var(--border);border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;transition:.3s;position:relative}
+#drop-zone:hover,#drop-zone.drag{border-color:var(--accent);background:#6366f110}
+#drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+#drop-zone .icon{font-size:2.5rem;margin-bottom:8px}
+#drop-zone p{color:var(--sub);font-size:.875rem}
+#drop-zone p b{color:var(--accent2)}
+#file-name{margin-top:10px;font-size:.8rem;color:var(--green);font-weight:500}
+
+/* AUDIO PLAYER */
+#audio-preview-wrap{margin-top:12px;display:none}
+#audio-preview{width:100%;height:36px;border-radius:8px;accent-color:var(--accent)}
+
+/* PARAMS */
+.param-row{display:flex;align-items:center;justify-content:space-between;margin-top:14px;gap:10px}
+.param-row label{font-size:.82rem;color:var(--sub);white-space:nowrap}
+.param-row input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
+.param-row span{font-size:.82rem;color:var(--accent2);min-width:32px;text-align:right}
+.param-row select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:4px 8px;font-size:.82rem;cursor:pointer}
+
+/* BTN */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-radius:10px;border:none;font-size:.9rem;font-weight:600;cursor:pointer;transition:.2s;width:100%;margin-top:14px}
+.btn-primary{background:linear-gradient(135deg,#4f46e5,#6366f1);color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px #6366f140}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-danger{background:var(--surface2);border:1px solid var(--border);color:var(--red);margin-top:8px}
+.btn-danger:hover{background:#f43f5e15;border-color:var(--red)}
+
+/* INDEX PANEL */
+.index-section{margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
+#index-dir{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:.78rem;color:var(--text);font-family:monospace}
+#progress-wrap{display:none;margin-top:12px}
+.progress-bar-bg{background:var(--surface2);border-radius:20px;height:8px;overflow:hidden;margin:8px 0}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,#4f46e5,#06b6d4);border-radius:20px;transition:width .3s}
+#index-msg{font-size:.78rem;color:var(--sub)}
+
+/* RIGHT PANEL */
+#right-panel{display:flex;flex-direction:column;gap:20px}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:16px;background:var(--surface2);border-radius:10px;padding:4px}
+.tab-btn{flex:1;padding:8px;border:none;background:none;color:var(--sub);font-size:.82rem;font-weight:500;border-radius:7px;cursor:pointer;transition:.2s}
+.tab-btn.active{background:var(--accent);color:#fff}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* RESULT CARDS */
+#results-list{display:flex;flex-direction:column;gap:10px}
+.result-item{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:14px;transition:.2s;cursor:default}
+.result-item:hover{border-color:var(--accent);transform:translateX(3px)}
+.result-item.rank-1{border-color:#f59e0b55;background:linear-gradient(135deg,#1e293b,#1a1505)}
+.rank-badge{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem}
+.rank-1 .rank-badge{background:#f59e0b20;color:#f59e0b;border:2px solid #f59e0b60}
+.rank-2 .rank-badge{background:#94a3b820;color:#94a3b8;border:2px solid #94a3b860}
+.rank-3 .rank-badge{background:#cd7f3220;color:#cd7f32;border:2px solid #cd7f3260}
+.result-item:not(.rank-1):not(.rank-2):not(.rank-3) .rank-badge{background:var(--surface);color:var(--sub);border:2px solid var(--border)}
+.result-label{font-size:1rem;font-weight:600;display:flex;align-items:center;gap:6px}
+.result-file{font-size:.74rem;color:var(--muted);margin-top:2px;word-break:break-all}
+.result-scores{text-align:right}
+.similarity-pct{font-size:1.1rem;font-weight:700;color:var(--green)}
+.score-detail{font-size:.72rem;color:var(--muted);margin-top:2px}
+.sim-bar{height:4px;border-radius:4px;background:var(--border);margin-top:6px;overflow:hidden}
+.sim-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#10b981,#06b6d4)}
+
+/* CHART IMGS */
+.chart-img{width:100%;border-radius:10px;margin-top:8px}
+
+/* EMPTY / LOADING */
+#empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+#empty-state .big{font-size:3.5rem;margin-bottom:12px}
+#loading-state{display:none;text-align:center;padding:60px 20px}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* LABEL DIST */
+#label-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:4px}
+.label-chip{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:.8rem;display:flex;align-items:center;gap:6px}
+.label-chip span.cnt{margin-left:auto;color:var(--accent2);font-weight:600}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 18px;font-size:.85rem;z-index:999;transform:translateY(80px);opacity:0;transition:.3s}
+#toast.show{transform:none;opacity:1}
+#toast.ok{border-color:var(--green);color:var(--green)}
+#toast.err{border-color:var(--red);color:var(--red)}
+
+@media(max-width:900px){main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span>🐾</span>
+    <h1>Animal Sound Retrieval</h1>
+  </div>
+  <div id="stats-badge">DB: <b id="hdr-total">–</b> files indexed</div>
+</header>
+
+<main>
+<!-- LEFT PANEL -->
+<div style="display:flex;flex-direction:column;gap:18px">
+  <!-- Upload -->
+  <div class="card">
+    <div class="card-title">Query Audio</div>
+    <div id="drop-zone">
+      <input type="file" id="file-input" accept=".wav,.mp3,.ogg,.flac,.m4a">
+      <div class="icon">🎧</div>
+      <p>Drop audio file here or <b>click to browse</b></p>
+      <p style="margin-top:4px;font-size:.75rem">WAV, MP3, OGG, FLAC supported</p>
+      <div id="file-name"></div>
+    </div>
+    <div id="audio-preview-wrap">
+      <audio id="audio-preview" controls></audio>
+    </div>
+
+    <div class="param-row">
+      <label>Top K results</label>
+      <input type="range" id="top-k" min="1" max="10" value="5" oninput="document.getElementById('top-k-val').textContent=this.value">
+      <span id="top-k-val">5</span>
+    </div>
+    <div class="param-row">
+      <label>α (Euclidean weight)</label>
+      <input type="range" id="alpha" min="0" max="1" step="0.1" value="0.5" oninput="document.getElementById('alpha-val').textContent=this.value">
+      <span id="alpha-val">0.5</span>
+    </div>
+
+    <button class="btn btn-primary" id="search-btn" disabled onclick="doSearch()">
+      Search Similar Sounds
+    </button>
+  </div>
+
+  <!-- DB Index -->
+  <div class="card">
+    <div class="card-title">Database Management</div>
+    <div id="label-grid"></div>
+    <div class="index-section">
+      <label style="font-size:.78rem;color:var(--sub);display:block;margin-bottom:6px">Audio directory path:</label>
+      <input id="index-dir" type="text" value="" placeholder="Auto-detected Animal-Sound folder">
+      <button class="btn btn-primary" id="index-btn" onclick="startIndexing()" style="margin-top:10px">
+        Index All Audio Files
+      </button>
+      <div id="progress-wrap">
+        <div id="index-msg">Starting...</div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+      </div>
+      <button class="btn btn-danger" onclick="clearDB()">Clear Database</button>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div id="right-panel">
+  <div class="card" style="flex:1">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('results',this)">Results</button>
+      <button class="tab-btn" onclick="switchTab('charts',this)">Charts</button>
+      <button class="tab-btn" onclick="switchTab('waveform',this)">Waveform</button>
+    </div>
+
+    <!-- Results tab -->
+    <div class="tab-pane active" id="tab-results">
+      <div id="empty-state">
+        <div class="big">😸🐵🐶🐯🦁🐹🐸🐷🐺</div>
+        <div style="font-size:1rem;font-weight:500;color:var(--sub)">Upload an audio file and click Search</div>
+        <div style="font-size:.8rem;margin-top:8px">System will find the most similar animal sounds from database</div>
+      </div>
+      <div id="loading-state">
+        <div class="spinner"></div>
+        <div style="color:var(--sub);font-size:.9rem">Analyzing audio & searching database...</div>
+      </div>
+      <div id="results-list"></div>
+    </div>
+
+    <!-- Charts tab -->
+    <div class="tab-pane" id="tab-charts">
+      <div style="color:var(--muted);font-size:.85rem;text-align:center;padding:40px 0" id="chart-empty">Run a search to see feature comparison charts</div>
+      <img id="chart-comparison" class="chart-img" style="display:none">
+      <img id="chart-spectrogram" class="chart-img" style="display:none;margin-top:12px">
+    </div>
+
+    <!-- Waveform tab -->
+    <div class="tab-pane" id="tab-waveform">
+      <div style="color:var(--muted);font-size:.85rem;text-align:center;padding:40px 0" id="wave-empty">Run a search to see waveform visualizations</div>
+      <div id="wave-content" style="display:none">
+        <img id="wave-raw" class="chart-img">
+        <img id="wave-clean" class="chart-img" style="margin-top:12px">
+      </div>
+    </div>
+  </div>
+</div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// ── File Input ──────────────────────────────────────────────
+const dropZone = $('drop-zone');
+const fileInput = $('file-input');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+function handleFile(f) {
+  $('file-name').textContent = f.name;
+  $('search-btn').disabled = false;
+  const url = URL.createObjectURL(f);
+  $('audio-preview').src = url;
+  $('audio-preview-wrap').style.display = 'block';
+}
+
+// ── Search ──────────────────────────────────────────────────
+async function doSearch() {
+  if (!fileInput.files[0]) return;
+  $('search-btn').disabled = true;
+  $('empty-state').style.display = 'none';
+  $('loading-state').style.display = 'block';
+  $('results-list').innerHTML = '';
+  $('chart-empty').style.display = 'block';
+  $('chart-comparison').style.display = 'none';
+  $('chart-spectrogram').style.display = 'none';
+  $('wave-empty').style.display = 'block';
+  $('wave-content').style.display = 'none';
+
+  const fd = new FormData();
+  fd.append('audio', fileInput.files[0]);
+  fd.append('top_k', $('top-k').value);
+  fd.append('alpha', $('alpha').value);
+
+  try {
+    const res = await fetch('/api/search', { method: 'POST', body: fd });
+    const data = await res.json();
+    $('loading-state').style.display = 'none';
+    $('search-btn').disabled = false;
+
+    if (data.error) { toast(data.error, 'err'); $('empty-state').style.display = 'block'; return; }
+
+    // Render results
+    data.results.forEach(r => {
+      const cls = r.rank <= 3 ? `rank-${r.rank}` : '';
+      const barW = Math.min(100, r.similarity).toFixed(1);
+      $('results-list').insertAdjacentHTML('beforeend', `
+        <div class="result-item ${cls}">
+          <div class="rank-badge">${r.rank}</div>
+          <div style="min-width:0">
+            <div class="result-label">${r.emoji} ${r.label}</div>
+            <div class="result-file">${r.file_name}</div>
+            <div class="sim-bar"><div class="sim-bar-fill" style="width:${barW}%"></div></div>
+            <audio controls src="/api/play?path=${encodeURIComponent(r.file_path)}" style="height: 32px; width: 100%; margin-top: 10px;"></audio>
+          </div>
+          <div class="result-scores">
+            <div class="similarity-pct">${r.similarity}%</div>
+            <div class="score-detail">H:${r.hybrid_score} E:${r.euclid_score} C:${r.cosine_score}</div>
+          </div>
+        </div>`);
+    });
+
+    // Charts
+    if (data.charts) {
+      $('chart-empty').style.display = 'none';
+      $('chart-comparison').src = 'data:image/png;base64,' + data.charts.comparison;
+      $('chart-comparison').style.display = 'block';
+      $('chart-spectrogram').src = 'data:image/png;base64,' + data.charts.spectrogram;
+      $('chart-spectrogram').style.display = 'block';
+      $('wave-empty').style.display = 'none';
+      $('wave-raw').src = 'data:image/png;base64,' + data.charts.waveform_raw;
+      $('wave-clean').src = 'data:image/png;base64,' + data.charts.waveform_clean;
+      $('wave-content').style.display = 'block';
+    }
+    toast(`Found ${data.results.length} results from ${data.db_total} files`, 'ok');
+  } catch(e) {
+    $('loading-state').style.display = 'none';
+    $('search-btn').disabled = false;
+    toast('Network error: ' + e.message, 'err');
+  }
+}
+
+// ── Indexing ────────────────────────────────────────────────
+let indexPoll = null;
+
+async function startIndexing() {
+  const dir = $('index-dir').value.trim() || null;
+  $('index-btn').disabled = true;
+  $('progress-wrap').style.display = 'block';
+  $('index-msg').textContent = 'Starting...';
+  $('progress-fill').style.width = '0%';
+
+  const body = dir ? JSON.stringify({base_dir: dir}) : '{}';
+  const res = await fetch('/api/index/start', {method:'POST', headers:{'Content-Type':'application/json'}, body});
+  const data = await res.json();
+  if (data.error) { toast(data.error,'err'); $('index-btn').disabled=false; return; }
+
+  indexPoll = setInterval(async () => {
+    const s = await (await fetch('/api/index/status')).json();
+    $('index-msg').textContent = s.message || '';
+    if (s.total > 0) $('progress-fill').style.width = Math.round(s.progress/s.total*100)+'%';
+    if (!s.running) {
+      clearInterval(indexPoll);
+      $('index-btn').disabled = false;
+      toast(s.error ? s.error : s.message, s.error ? 'err' : 'ok');
+      loadStats();
+    }
+  }, 800);
+}
+
+async function clearDB() {
+  if (!confirm('Clear all indexed data from database?')) return;
+  const r = await (await fetch('/api/db/clear', {method:'POST'})).json();
+  toast(r.error || r.message, r.error ? 'err' : 'ok');
+  loadStats();
+}
+
+// ── Stats ────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const d = await (await fetch('/api/stats')).json();
+    $('hdr-total').textContent = d.total.toLocaleString();
+    const grid = $('label-grid');
+    if (d.by_label && d.by_label.length) {
+      grid.innerHTML = d.by_label.map(l =>
+        `<div class="label-chip">${l.emoji} ${l.label}<span class="cnt">${l.count}</span></div>`
+      ).join('');
+    } else {
+      grid.innerHTML = '<div style="color:var(--muted);font-size:.8rem;grid-column:1/-1">No data indexed yet</div>';
+    }
+  } catch(e) {}
+}
+
+// ── Tabs ─────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  $('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Toast ─────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(() => t.className = '', 3500);
+}
+
+// Init
+window.addEventListener('DOMContentLoaded', () => {
+  // Set default dir
+  $('index-dir').placeholder = 'Default: Animal-Sound folder in project';
+  loadStats();
+});
+</script>
+</body>
+</html>
